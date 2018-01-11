@@ -22,8 +22,11 @@ print(n_items)
 
 # Divide the dataset into training and testing sets
 train_data, test_data = train_test_split(df, test_size=0.25)
-print('train_data length: {}'.format(len(train_data)))
-print('test_data length: {}'.format(len(test_data)))
+# print('train_data length: {}'.format(len(train_data)))
+# print('test_data length: {}'.format(len(test_data)))
+
+
+# Memory-based collaborative filtering
 
 
 #Create two user-item matrices, one for training and another for testing
@@ -60,3 +63,30 @@ item_prediction = predict(train_data_matrix, item_similarity, type='item')
 user_prediction = predict(train_data_matrix, user_similarity, type='user')
 
 
+from sklearn.metrics import mean_squared_error
+from math import sqrt
+
+def rmse(prediction, ground_truth):
+    prediction = prediction[ground_truth.nonzero()].flatten()
+    ground_truth = ground_truth[ground_truth.nonzero()].flatten()
+    return sqrt(mean_squared_error(prediction, ground_truth))
+
+print('User-based CF RMSE: ' + str(rmse(user_prediction, test_data_matrix)))
+print('Item-based CF RMSE: ' + str(rmse(item_prediction, test_data_matrix)))
+
+
+# Model-based collaborative filtering
+
+
+sparsity = round(1.0-len(df)/float(n_users*n_items), 3)
+print('The sparsity level of MovieLens100K is ' + str(sparsity*100) + '%')
+
+
+import scipy.sparse as sp
+from scipy.sparse.linalg import svds
+
+#get SVD components from train matrix. Choose k.
+u, s, vt = svds(train_data_matrix, k=20)
+s_diag_matrix=np.diag(s)
+X_pred = np.dot(np.dot(u, s_diag_matrix), vt)
+print('User-based CF MSE: ' + str(rmse(X_pred, test_data_matrix)))
